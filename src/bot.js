@@ -15,8 +15,20 @@ client.on('message', (message) => {
       .trim()
       .substring(PREFIX.length)
       .split(/\s+/);
-    console.log(CMD_NAME);
-    console.log(args);
+
+    if (CMD_NAME === 'kick') {
+      if (args.length === 0) return message.reply('Please provide an ID');
+      const member = message.guild.members.cache.get(args[0]);
+
+      if (member) {
+        member
+          .kick()
+          .then((member) => message.channel.send(`${member} was kicked.`))
+          .catch((err) => message.channel.send('Permission is not granted.'));
+      } else {
+        message.channel.send('That member is not in here.');
+      }
+    }
   }
 });
 
