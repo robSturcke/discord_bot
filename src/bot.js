@@ -1,21 +1,24 @@
 require('dotenv').config();
 
 const { Client } = require('discord.js');
-const client = new Client();
+const client = new Client({
+  partials: ['MESSAGE', 'REACTION'],
+});
 const PREFIX = '!';
 
 client.on('ready', () => {
   console.log(`The bot has logged in as username: ${client.user.tag}`);
 });
 
-client.on('message', (message) => {
+client.on('message', async (message) => {
   if (message.author.bot) return;
   if (message.content.startsWith(PREFIX)) {
     const [CMD_NAME, ...args] = message.content
       .trim()
       .substring(PREFIX.length)
       .split(/\s+/);
-
+    if (!message.member.hasPermission('KICK_MEMBERS'))
+      return message.reply('You cannot kick with your current permissions.');
     if (CMD_NAME === 'kick') {
       if (args.length === 0) return message.reply('Please provide an ID');
       const member = message.guild.members.cache.get(args[0]);
@@ -28,6 +31,52 @@ client.on('message', (message) => {
       } else {
         message.channel.send('That member is not in here.');
       }
+    }
+  } else if (CMD_NAME === 'ban') {
+    if (!message.member.hasPermission('BAN_MEMBERS'))
+      return message.reply('You cannot ban with your current permissions.');
+    if (args.length === 0) return message.reply('Please provide an ID');
+
+    try {
+      const user = await message.guid.members.ban(args[0]);
+      message.channel.send('User was banned successfully.');
+    } catch (err) {
+      console.log(err);
+      message.channel.send(
+        'An error occured. You may not have permissions, or user is not found.'
+      );
+    }
+  }
+});
+
+client.on('messageReactionAdd', (reaction, user) => {
+  console.log('Hello');
+  const { name } = reaction.emoji;
+  const member = reaction.message.guild.members.cache.get(user.id);
+  if (reaction.message.id === '840379108919083020') {
+    switch (name) {
+      case '🍎':
+        member.roles.add('840376653413744651');
+        break;
+      case '🍇':
+        member.roles.add('840376690630197258');
+        break;
+    }
+  }
+});
+
+client.on('messageReactionRemove', (reaction, user) => {
+  console.log('Bye');
+  const { name } = reaction.emoji;
+  const member = reaction.message.guild.members.cache.get(user.id);
+  if (reaction.message.id === '840379108919083020') {
+    switch (name) {
+      case '🍎':
+        member.roles.remove('840376653413744651');
+        break;
+      case '🍇':
+        member.roles.remove('840376690630197258');
+        break;
     }
   }
 });
